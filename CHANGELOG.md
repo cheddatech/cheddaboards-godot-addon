@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## v2.2.6 (2026-09-04)
+
+### ⚠️ Behavior change
+- `get_leaderboard()` default limit is now **100** entries (was 1000),
+  matching every other getter. Pass a limit explicitly if you need
+  deeper results: `get_leaderboard("score", 1000)`. To find a specific
+  player's position, use `get_player_rank()` instead of scanning the
+  board.
+
+### Fixed
+- **Batch achievement signals**: the async batch path skipped response
+  handling entirely, so batch unlocks synced server-side but
+  `achievement_unlocked` / `achievements_loaded` never fired and
+  internal sync counters were left dirty. Batches now go through a
+  dedicated sender with a real completion handler — both signals fire
+  with the confirmed ids.
+
+### Changed
+- **Read de-duplication**: an identical read request (same endpoint)
+  that is already queued or in flight is dropped instead of being sent
+  twice — the caller still gets its signal from the request already on
+  the wire. Applies to idempotent reads only (leaderboards, ranks,
+  profiles, scoreboards, archives, achievements); score submits and
+  other writes are never de-duplicated.
+  
 ## [2.2.5] - 2026-09-01
 
 ### Leaderboards, Direct from the Canister
