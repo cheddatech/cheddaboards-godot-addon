@@ -4,7 +4,7 @@
 
 Give your players a reason to come back. CheddaBoards is leaderboards-as-a-service for Godot: you keep making your game, we run the backend. No server, no database, no credit card, no per-player fees — and the SDK is MIT, so nothing about your integration is locked in.
 
-**Current version: 2.2.5** — see [CHANGELOG.md](CHANGELOG.md)
+**Current version: 2.2.6** — see [CHANGELOG.md](CHANGELOG.md)
 
 ## Install
 
@@ -46,7 +46,7 @@ This addon is the SDK — your leaderboard should look like your game. Wiring a 
 
 ## Want a full game shell instead?
 
-If you're starting a fresh project, the free [CheddaBoards Template](https://store.godotengine.org/asset/cheddatech/cheddaboards-template/) wraps this SDK in finished MainMenu / Leaderboard / Achievements screens — your game just emits one `game_over` signal (~3 minutes). A [REST API](https://github.com/cheddatech/cheddaboards-godot/blob/main/docs/quickstart-api.md) is also available for non-Godot engines.
+If you're starting a fresh project, the free [CheddaBoards Template](https://store.godotengine.org/asset/cheddatech/cheddaboards-template/) wraps this SDK in finished MainMenu / Leaderboard / Achievements screens — your game just emits one `game_over` signal (~3 minutes). A [REST API](https://docs.cheddaboards.com/quickstart/rest) is also available for non-Godot engines.
 
 ## Requirements
 
@@ -56,9 +56,9 @@ If you're starting a fresh project, the free [CheddaBoards Template](https://sto
 
 ## Docs & support
 
-* [Documentation index](https://github.com/cheddatech/cheddaboards-godot/tree/main/docs)
-* [Drop-in Quickstart](https://github.com/cheddatech/cheddaboards-godot/blob/main/docs/quickstart-dropin.md)
-* [Troubleshooting](https://github.com/cheddatech/cheddaboards-godot/blob/main/docs/TROUBLESHOOTING.md)
+* [Documentation index](https://docs.cheddaboards.com)
+* [Drop-in Quickstart](https://docs.cheddaboards.com/quickstart/godot)
+* [Troubleshooting](https://docs.cheddaboards.com/api/errors)
 * [Website](https://cheddaboards.com/)
 
 ## License

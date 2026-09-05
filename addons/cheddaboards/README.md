@@ -1,6 +1,6 @@
 # CheddaBoards — Online Leaderboards (Godot SDK)
 
-Version 2.2.5 · Godot 4.6+ · MIT
+Version 2.2.6 · Godot 4.6+ · MIT
 
 Online leaderboards, achievements, and cross-platform sign-in for
 Godot 4.6+ — with nothing for you to host.
@@ -44,7 +44,9 @@ boards just load faster.
 
 ## More
 
-- Full docs, guides and the complete game template:
+- Full documentation, guides and API reference:
+  https://docs.cheddaboards.com
+- The complete game template:
   https://github.com/cheddatech/cheddaboards-godot
 - Worked example — Dodge the Creeps with leaderboards:
   https://github.com/cheddatech/cheddaboards-dodge-the-creeps
