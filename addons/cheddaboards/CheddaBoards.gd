@@ -248,6 +248,8 @@ signal device_code_error(reason: String)
 var debug_logging: bool = false
 
 ## HTTP API Configuration
+## SDK version. Keep in sync with the header changelog.
+const VERSION = "2.2.7"
 const API_BASE_URL = "https://api.cheddaboards.com"
 ## Direct canister reads (public board GETs served by the canister itself
 ## over the IC HTTP gateway). Same response shape as the proxy; used for
@@ -366,7 +368,7 @@ func _ready() -> void:
 	# to hang indefinitely.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_http_client()
-	_log("Initializing CheddaBoards v2.2.6 (HTTP API Mode)...")
+	_log("Initializing CheddaBoards v%s (HTTP API Mode)..." % VERSION)
 	_load_saved_session()
 	_init_complete = true
 	call_deferred("_emit_sdk_ready")
@@ -456,7 +458,14 @@ func _on_http_request_completed(result: int, response_code: int, headers: Packed
 			# problems - not a canister answer, so ask the proxy instead
 			_retry_via_proxy("non-JSON response (HTTP %d)" % response_code)
 			return
-		push_error("[CheddaBoards] Failed to parse JSON response")
+		var raw_text := body.get_string_from_utf8()
+		var first_codes := "n/a"
+		if raw_text.length() > 0:
+			var codes: Array = []
+			for ci in range(mini(3, raw_text.length())):
+				codes.append(str(raw_text.unicode_at(ci)))
+			first_codes = ",".join(codes)
+		push_error("[CheddaBoards] Failed to parse JSON response (HTTP %d, %d chars, first char codes: %s): %s" % [response_code, raw_text.length(), first_codes, raw_text])
 		request_failed.emit(_current_endpoint, "Invalid JSON response")
 		_emit_http_failure("Invalid JSON response")
 		return
@@ -2039,7 +2048,8 @@ func _on_achievement_batch_completed(code: int, body: PackedByteArray) -> void:
 		return
 	var json = JSON.new()
 	if json.parse(body.get_string_from_utf8()) != OK:
-		_log("Batch achievement sync: invalid JSON response")
+		_log("Batch achievement sync: invalid JSON response (HTTP %d): %s" % [code, body.get_string_from_utf8()])
+		_last_batch_ids.clear()
 		return
 	var response = json.data
 	if typeof(response) != TYPE_DICTIONARY:
