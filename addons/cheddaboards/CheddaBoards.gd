@@ -36,6 +36,12 @@
 #     where re-sends of already-unlocked ids also return success:true;
 #     the count key is "unlocked", not "synced". achievements_loaded now
 #     always carries the real synced set on success.
+#   - get_achievements() works again. It called
+#     GET /players/{id}/achievements, a route the API doesn't have
+#     ("Unknown endpoint"). Achievements are only exposed on the profile,
+#     so it now fetches the profile and surfaces gameProfile.achievements
+#     via achievements_loaded. profile_loaded does not fire for this
+#     call; reading achievements from profile_loaded also still works.
 # v2.2.6:
 #   - Request de-duplication: an identical read request (same endpoint)
 #     that is already queued or in flight is dropped instead of being
@@ -603,7 +609,17 @@ func _emit_http_success(data) -> void:
 			_last_batch_ids.clear()
 		
 		"achievements":
-			var achievements = data.get("achievements", [])
+			# Response is a profile: achievements sit under
+			# gameProfile.achievements. Top-level "achievements" is kept as
+			# a fallback for older/alternate responses.
+			var game_profile = data.get("gameProfile", {})
+			if typeof(game_profile) != TYPE_DICTIONARY:
+				game_profile = {}
+			var achievements = game_profile.get("achievements", [])
+			if typeof(achievements) != TYPE_ARRAY or achievements.is_empty():
+				achievements = data.get("achievements", [])
+			if typeof(achievements) != TYPE_ARRAY:
+				achievements = []
 			achievements_loaded.emit(achievements)
 		
 		"list_scoreboards":
@@ -1916,8 +1932,21 @@ func unlock_achievements_batch(achievement_ids: Array) -> void:
 	_send_achievement_batch(achievement_ids)
 
 func get_achievements(player_id: String = "") -> void:
+	# Achievements live on the profile (gameProfile.achievements) - there is
+	# no standalone /players/{id}/achievements route (the old URL returned
+	# "Unknown endpoint"). This fetches the profile and surfaces just the
+	# achievements via achievements_loaded; profile_loaded does NOT fire
+	# for this call.
+	if not _session_token.is_empty() and player_id == "":
+		_make_http_request("/auth/profile", HTTPClient.METHOD_GET, {}, "achievements")
+		_log("Achievements requested (session profile)")
+		return
 	var pid = player_id if player_id != "" else get_player_id()
-	var url = "/players/%s/achievements" % pid.uri_encode()
+	if pid.is_empty():
+		_log("No player ID for achievements fetch")
+		achievements_loaded.emit([])
+		return
+	var url = "/players/%s/profile" % pid.uri_encode()
 	_make_http_request(url, HTTPClient.METHOD_GET, {}, "achievements")
 	_log("Achievements requested for: %s" % pid)
 

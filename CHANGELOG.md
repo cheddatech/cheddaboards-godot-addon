@@ -8,10 +8,19 @@ This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.
 
 ## v2.2.7 (2026-09-11)
 
-Two fixes on the anonymous-player write paths. No API changes — drop-in
-for existing games.
+Two fixes and one repaired method on the anonymous-player paths. No API
+changes — drop-in for existing games.
 
 ### Fixed
+- **`get_achievements()` works again.** It called
+  `GET /players/{id}/achievements`, a route the API doesn't have — the
+  server answered `"Unknown endpoint"` and `achievements_loaded` never
+  fired with data. Achievements are only exposed on the profile, so the
+  method now fetches the profile and surfaces
+  `gameProfile.achievements` via `achievements_loaded`.
+  `profile_loaded` does **not** fire for this call, so existing profile
+  handlers aren't double-triggered — and reading achievements from
+  `profile_loaded` directly still works exactly as before.
 - **Submits no longer rename the player.** All three submit paths
   (`submit_score()`, `submit_score_with_achievements()`,
   `submit_score_to_board()`) always sent a nickname, filling in a
