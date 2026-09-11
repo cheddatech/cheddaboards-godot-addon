@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## v2.2.7 (2026-09-11)
+
+Two fixes on the anonymous-player write paths. No API changes — drop-in
+for existing games.
+
+### Fixed
+- **Submits no longer rename the player.** All three submit paths
+  (`submit_score()`, `submit_score_with_achievements()`,
+  `submit_score_to_board()`) always sent a nickname, filling in a
+  generated `Player_XXXXXX` when `_nickname` was empty — so every
+  submit by a returning anonymous player whose profile hadn't loaded
+  yet silently overwrote their saved name with a fresh generated one.
+  The `nickname` field is now omitted from the submit body unless the
+  caller actually set one; the server keeps the existing profile name.
+  The profile parser also no longer backfills a generated name into
+  `_nickname` when a profile arrives unnamed — that read-path leak
+  would have written a generated name back on the very next submit.
+  Games that force-loaded the profile at startup to dodge this still
+  work unchanged; the workaround is just no longer needed.
+- **Batch achievement sync no longer reports "0 synced" on success.**
+  The response parser read a `synced` count key the server doesn't
+  send (the real key is `unlocked`) and accepted only one exact
+  `results` shape, so a successful batch logged
+  `Batch achievement sync complete: 0 synced` and
+  `achievements_loaded` could fire empty — a false failure on a write
+  that actually persisted. The reported count is now the number of ids
+  actually parsed; the parser tolerates alternate array keys
+  (`unlocked` / `syncedIds` / `achievements`), alternate id keys
+  (`id` / `achievement`), plain id-string arrays, and non-bool success
+  flags; and if an HTTP 2xx body still isn't recognised, the
+  **requested** ids are reported as synced (raw body logged for
+  diagnosis) — a 200 means the server stored them. Verified against
+  live API v1.8.0: `data.results[]` of
+  `{achievementId, success, message}`, where re-sends of
+  already-unlocked ids also return `success: true`.
+
+### Changed
+- **Unnamed anonymous players stay unnamed.** With the submit fix
+  above, a player who never sets a name keeps an empty nickname
+  server-side instead of accumulating generated ones. Render these as
+  `"Guest"` in your UI — `get_nickname()` already returns `""` for
+  this case (since v2.2.4).
+
 ## v2.2.6 (2026-09-04)
 
 ### ⚠️ Behavior change
