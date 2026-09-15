@@ -6,12 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
-## v2.2.7 (2026-09-11)
+## v2.2.7 (2026-09-15)
 
-Two fixes and one repaired method on the anonymous-player paths. No API
-changes — drop-in for existing games.
+Rename reliability plus two fixes and one repaired method on the
+anonymous-player paths. No API changes — drop-in for existing games.
 
 ### Fixed
+- **Renames no longer silently no-op.** `change_nickname()` gated the
+  server rename on having a cached profile, so a rename fired while the
+  cache was empty — right after a first submit, after a failed profile
+  fetch, any time before one resolved — took a local-only branch:
+  `nickname_changed` fired, nothing was sent, and the board kept the old
+  name. The gate is now a backend-existence flag set by any successful
+  submit or profile load. A name set before the player exists on the
+  backend still applies instantly in the UI, rides the first submit, and
+  is re-synced from the profile path if the server disagrees (capped
+  retries). The same fix ships in the Unity SDK.
+- **Rename responses without an echoed nickname are no longer dropped.**
+  A 2xx `ok:true` rename whose body carried no `nickname` field
+  previously did nothing at all — no signal, no error, no refresh. The
+  SDK now falls back to the name it requested; an echoed name still wins
+  when present, since the server may suffix on collision (`Name_1`).
 - **`get_achievements()` works again.** It called
   `GET /players/{id}/achievements`, a route the API doesn't have — the
   server answered `"Unknown endpoint"` and `achievements_loaded` never
@@ -52,11 +67,15 @@ changes — drop-in for existing games.
   already-unlocked ids also return `success: true`.
 
 ### Changed
-- **Unnamed anonymous players stay unnamed.** With the submit fix
-  above, a player who never sets a name keeps an empty nickname
-  server-side instead of accumulating generated ones. Render these as
-  `"Guest"` in your UI — `get_nickname()` already returns `""` for
-  this case (since v2.2.4).
+- **One stable generated name instead of name churn.** With the submit
+  fix above, the client never invents names. The server assigns a single
+  `Player_NNNN` when the account is first created and keeps it until the
+  player picks their own with `change_nickname()` — previously every
+  early submit could overwrite the saved name with a fresh generated
+  one. `get_nickname()` still returns `""` until a profile fetch or
+  rename has told the SDK the name, so fetch the profile after the first
+  submit if you want to display or highlight it; `"Guest"` fallbacks in
+  existing UIs stay harmless.
 
 ## v2.2.6 (2026-09-04)
 

@@ -4,7 +4,7 @@
 
 Give your players a reason to come back. CheddaBoards is leaderboards-as-a-service for Godot: you keep making your game, we run the backend. No server, no database, no credit card, no per-player fees — and the SDK is MIT, so nothing about your integration is locked in.
 
-**Current version: 2.2.6** — see [CHANGELOG.md](CHANGELOG.md)
+**Current version: 2.2.7** — see [CHANGELOG.md](CHANGELOG.md)
 
 ## Install
 
@@ -33,16 +33,17 @@ Your scores, achievements and sign-in are live — there is no server for you to
 * **Timed boards done properly** — weekly / daily / monthly / custom-interval boards that reset on calendar boundaries and archive automatically, so past competitions are browsable, not lost
 * **Category boards** — per-level, per-mode or per-difficulty leaderboards under one game, no separate registration per board
 * **Achievements** — unlock individually or in batches, submit alongside scores, deferred sync built in; a full auto-unlock engine with offline caching and popups ships in the free template
-* **Anonymous play, zero setup** — players submit scores with no account; they can link Google or Apple later and keep all progress
+* **Anonymous play, zero setup** — players submit scores with no account; the server names them automatically (Player_1248) and they can pick their own in-game with `change_nickname()`. Link Google or Apple later and keep all progress
 * **Device Code sign-in** — Google / Apple login on any platform via QR + code, no OAuth SDKs to bundle. Players sign in once and stay signed in across restarts and web reloads
+* **Faster board loads** — leaderboard reads come straight from the backend canister, with automatic proxy fallback, so boards load quickly with no setup
 * **Anti-cheat** — server-side play sessions, score validation, rate limiting, configurable caps
 * **Score moderation** — delete junk entries or wipe a player from your boards straight from the dashboard, with a deletion audit log
 * **Works everywhere Godot exports** — desktop, mobile and HTML5/web, including touch scrolling and mobile name entry
-* **Battle-tested** — this exact SDK runs our own live arcade games in production
+* **Battle-tested** — this exact SDK runs our own arcade games and other developers' shipped titles in production, including games live on Google Play
 
 ## Bring your own UI
 
-This addon is the SDK — your leaderboard should look like your game. Wiring a display takes one signal connection and a few Labels. We added a full online leaderboard to the official Dodge the Creeps demo in ~60 lines — [tutorial + runnable example](https://github.com/cheddatech/cheddaboards-dodge-the-creeps).
+This addon is the SDK — your leaderboard should look like your game. Wiring a display takes one signal connection and a few Labels. We added a full online leaderboard with player names to the official Dodge the Creeps demo in one modified script — the SDK calls are a couple dozen lines, the rest is just drawing our panel — [tutorial + runnable example](https://github.com/cheddatech/cheddaboards-dodge-the-creeps).
 
 ## Want a full game shell instead?
 
@@ -52,7 +53,7 @@ If you're starting a fresh project, the free [CheddaBoards Template](https://sto
 
 * Godot 4.6 or newer (Godot 3.6 backport available)
 * A free CheddaBoards account + API key from the dashboard at [cheddaboards.com](https://cheddaboards.com/)
-* A Unity (C#) SDK is also available with full API parity
+* A Unity (C#) SDK with the same API is also available
 
 ## Docs & support
 
