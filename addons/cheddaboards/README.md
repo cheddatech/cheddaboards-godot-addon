@@ -1,6 +1,6 @@
 # CheddaBoards — Online Leaderboards (Godot SDK)
 
-Version 2.2.6 · Godot 4.6+ · MIT
+Version 2.2.7 · Godot 4.6+ · MIT
 
 Online leaderboards, achievements, and cross-platform sign-in for
 Godot 4.6+ — with nothing for you to host.
