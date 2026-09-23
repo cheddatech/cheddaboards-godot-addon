@@ -6,6 +6,9 @@ Give your players a reason to come back. CheddaBoards is leaderboards-as-a-servi
 
 **Current version: 2.2.7** — see [CHANGELOG.md](CHANGELOG.md)
 
+[![API uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fapi%2Fuptime.json&label=API%20uptime)](https://status.cheddatech.com)
+[![Leaderboards uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fleaderboards-on-chain%2Fuptime.json&label=leaderboards%20uptime)](https://status.cheddatech.com)
+
 ## Install
 
 **From the Godot Asset Store (recommended):** install [CheddaBoards — Online Leaderboards](https://store.godotengine.org/asset/cheddatech/cheddaboards) via the in-editor asset browser, then enable **CheddaBoards** in Project Settings → Plugins (this registers the autoload for you).
@@ -60,6 +63,7 @@ If you're starting a fresh project, the free [CheddaBoards Template](https://sto
 * [Documentation index](https://docs.cheddaboards.com)
 * [Drop-in Quickstart](https://docs.cheddaboards.com/quickstart/godot)
 * [Troubleshooting](https://docs.cheddaboards.com/api/errors)
+* [Service status](https://status.cheddatech.com) — check here first if scores stop submitting
 * [Website](https://cheddaboards.com/)
 
 ## License
