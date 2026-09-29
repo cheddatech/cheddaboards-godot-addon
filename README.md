@@ -4,7 +4,7 @@
 
 Give your players a reason to come back. CheddaBoards is leaderboards-as-a-service for Godot: you keep making your game, we run the backend. No server, no database, no credit card, no per-player fees — and the SDK is MIT, so nothing about your integration is locked in.
 
-**Current version: 2.2.7** — see [CHANGELOG.md](CHANGELOG.md)
+**Current version: 2.3.0** — see [CHANGELOG.md](CHANGELOG.md)
 
 [![API uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fapi%2Fuptime.json&label=API%20uptime)](https://status.cheddatech.com)
 [![Leaderboards uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fleaderboards-on-chain%2Fuptime.json&label=leaderboards%20uptime)](https://status.cheddatech.com)
@@ -37,7 +37,7 @@ Your scores, achievements and sign-in are live — there is no server for you to
 * **Category boards** — per-level, per-mode or per-difficulty leaderboards under one game, no separate registration per board
 * **Achievements** — unlock individually or in batches, submit alongside scores, deferred sync built in; a full auto-unlock engine with offline caching and popups ships in the free template
 * **Anonymous play, zero setup** — players submit scores with no account; the server names them automatically (Player_1248) and they can pick their own in-game with `change_nickname()`. Link Google or Apple later and keep all progress
-* **Device Code sign-in** — Google / Apple login on any platform via QR + code, no OAuth SDKs to bundle. Players sign in once and stay signed in across restarts and web reloads
+* **Device Code sign-in** — Google / Apple login on any platform via QR + code, no OAuth SDKs to bundle. Players sign in once and stay signed in across restarts and web reloads, and a sign-in interrupted mid-link (phone tabs, home-screen web apps) picks up where it left off
 * **Faster board loads** — leaderboard reads come straight from the backend canister, with automatic proxy fallback, so boards load quickly with no setup
 * **Anti-cheat** — server-side play sessions, score validation, rate limiting, configurable caps
 * **Score moderation** — delete junk entries or wipe a player from your boards straight from the dashboard, with a deletion audit log
@@ -57,6 +57,10 @@ If you're starting a fresh project, the free [CheddaBoards Template](https://sto
 * Godot 4.6 or newer (Godot 3.6 backport available)
 * A free CheddaBoards account + API key from the dashboard at [cheddaboards.com](https://cheddaboards.com/)
 * A Unity (C#) SDK with the same API is also available
+
+## Testing
+
+`smoke/` is a standalone Godot project that runs every public SDK call against a test game on the live API and checks the signals it gets back. It's the gate every tagged release passes before it ships, and you can point it at your own game to check an integration: copy `smoke/.env.example` to `smoke/.env`, fill in your key and game id, and run `smoke/run.sh` (or `run.ps1`). It's `.gdignore`d, so it never touches your project or exports.
 
 ## Docs & support
 

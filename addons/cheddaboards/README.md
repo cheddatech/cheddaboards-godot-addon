@@ -1,75 +1,13 @@
-![CheddaBoards](logo.png)
+# CheddaBoards SDK 2.3.0
 
-# CheddaBoards — Online Leaderboards for Godot
+Online leaderboards, achievements and sign-in for Godot 4.6+.
 
-Give your players a reason to come back. CheddaBoards is leaderboards-as-a-service for Godot: you keep making your game, we run the backend. No server, no database, no credit card, no per-player fees — and the SDK is MIT, so nothing about your integration is locked in.
+- Docs: https://docs.cheddaboards.com/quickstart/godot
+- Changelog: https://github.com/cheddatech/cheddaboards-godot-addon/blob/main/CHANGELOG.md
+- Status: https://status.cheddatech.com
 
-**Current version: 2.3.0** — see [CHANGELOG.md](CHANGELOG.md)
+Enable the plugin in Project Settings → Plugins to register the
+`CheddaBoards` autoload. `SetupWizard.gd` (File → Run) writes your API
+key in. `ui/DeviceCodeLogin.tscn` is a drop-in sign-in popup.
 
-[![API uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fapi%2Fuptime.json&label=API%20uptime)](https://status.cheddatech.com)
-[![Leaderboards uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcheddatech%2Fstatus%2FHEAD%2Fapi%2Fleaderboards-on-chain%2Fuptime.json&label=leaderboards%20uptime)](https://status.cheddatech.com)
-
-## Install
-
-**From the Godot Asset Store (recommended):** install [CheddaBoards — Online Leaderboards](https://store.godotengine.org/asset/cheddatech/cheddaboards) via the in-editor asset browser, then enable **CheddaBoards** in Project Settings → Plugins (this registers the autoload for you).
-
-**Manual:** copy the `addons/cheddaboards` folder from this repo into your project, then enable the plugin the same way.
-
-## Quick start
-
-1. Install and enable the plugin as above
-2. Set your API key from the free dashboard — the included Setup Wizard (open `SetupWizard.gd`, File → Run) writes it into your main scene's script for you
-3. In your game:
-
-```gdscript
-await CheddaBoards.wait_until_ready()
-CheddaBoards.login_anonymous()      # no sign-up needed
-CheddaBoards.submit_score(score)    # e.g. on game over
-CheddaBoards.get_leaderboard()      # emits leaderboard_loaded
-```
-
-Your scores, achievements and sign-in are live — there is no server for you to run.
-
-## What you get
-
-* **Global leaderboards** — score + streak, top 100, the player's own rank via `get_player_rank()`
-* **Timed boards done properly** — weekly / daily / monthly / custom-interval boards that reset on calendar boundaries and archive automatically, so past competitions are browsable, not lost
-* **Category boards** — per-level, per-mode or per-difficulty leaderboards under one game, no separate registration per board
-* **Achievements** — unlock individually or in batches, submit alongside scores, deferred sync built in; a full auto-unlock engine with offline caching and popups ships in the free template
-* **Anonymous play, zero setup** — players submit scores with no account; the server names them automatically (Player_1248) and they can pick their own in-game with `change_nickname()`. Link Google or Apple later and keep all progress
-* **Device Code sign-in** — Google / Apple login on any platform via QR + code, no OAuth SDKs to bundle. Players sign in once and stay signed in across restarts and web reloads, and a sign-in interrupted mid-link (phone tabs, home-screen web apps) picks up where it left off
-* **Faster board loads** — leaderboard reads come straight from the backend canister, with automatic proxy fallback, so boards load quickly with no setup
-* **Anti-cheat** — server-side play sessions, score validation, rate limiting, configurable caps
-* **Score moderation** — delete junk entries or wipe a player from your boards straight from the dashboard, with a deletion audit log
-* **Works everywhere Godot exports** — desktop, mobile and HTML5/web, including touch scrolling and mobile name entry
-* **Battle-tested** — this exact SDK runs our own arcade games and other developers' shipped titles in production, including games live on Google Play
-
-## Bring your own UI
-
-This addon is the SDK — your leaderboard should look like your game. Wiring a display takes one signal connection and a few Labels. We added a full online leaderboard with player names to the official Dodge the Creeps demo in one modified script — the SDK calls are a couple dozen lines, the rest is just drawing our panel — [tutorial + runnable example](https://github.com/cheddatech/cheddaboards-dodge-the-creeps).
-
-## Want a full game shell instead?
-
-If you're starting a fresh project, the free [CheddaBoards Template](https://store.godotengine.org/asset/cheddatech/cheddaboards-template/) wraps this SDK in finished MainMenu / Leaderboard / Achievements screens — your game just emits one `game_over` signal (~3 minutes). A [REST API](https://docs.cheddaboards.com/quickstart/rest) is also available for non-Godot engines.
-
-## Requirements
-
-* Godot 4.6 or newer (Godot 3.6 backport available)
-* A free CheddaBoards account + API key from the dashboard at [cheddaboards.com](https://cheddaboards.com/)
-* A Unity (C#) SDK with the same API is also available
-
-## Testing
-
-`smoke/` is a standalone Godot project that runs every public SDK call against a test game on the live API and checks the signals it gets back. It's the gate every tagged release passes before it ships, and you can point it at your own game to check an integration: copy `smoke/.env.example` to `smoke/.env`, fill in your key and game id, and run `smoke/run.sh` (or `run.ps1`). It's `.gdignore`d, so it never touches your project or exports.
-
-## Docs & support
-
-* [Documentation index](https://docs.cheddaboards.com)
-* [Drop-in Quickstart](https://docs.cheddaboards.com/quickstart/godot)
-* [Troubleshooting](https://docs.cheddaboards.com/api/errors)
-* [Service status](https://status.cheddatech.com) — check here first if scores stop submitting
-* [Website](https://cheddaboards.com/)
-
-## License
-
-MIT. The SDK is fully open source; the hosted backend has a free tier with no per-player fees.
+MIT licensed.
