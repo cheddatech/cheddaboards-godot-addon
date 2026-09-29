@@ -1,0 +1,7 @@
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.github export-ignore
+/smoke export-ignore
+/README.md export-ignore
+/CHANGELOG.md export-ignore
+/logo.png export-ignore
