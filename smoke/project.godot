@@ -1,0 +1,21 @@
+; Standalone Godot project for the CheddaBoards SDK smoke test.
+; The addon is COPIED in from ../addons by run.sh / run.ps1 before each run
+; (smoke/addons/ is gitignored), so this project always tests the addon
+; as it sits in the repo, not a stale copy.
+
+config_version=5
+
+[application]
+
+config/name="CheddaBoards Smoke"
+run/main_scene="res://smoke.tscn"
+config/features=PackedStringArray("4.3")
+
+[autoload]
+
+CheddaBoards="*res://addons/cheddaboards/CheddaBoards.gd"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360

@@ -1,18 +1,14 @@
-# macOS
 .DS_Store
 __MACOSX/
-
-# Godot
 .godot/
 *.import
-export_presets.cfg
 *.translation
-
-# Editors
+export_presets.cfg
+export/
 .vscode/
 .idea/
-
-# Never commit keys or identities
 *.pem
 .env
 *.env
+smoke/addons/
+smoke/.godot/
