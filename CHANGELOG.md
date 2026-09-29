@@ -6,6 +6,92 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## v2.3.0 (2026-09-28)
+
+Device code linking now survives a page reload, two helpers that never
+worked are fixed, and failed achievement batches are no longer silent.
+Minor bump: this release adds public API and changes two behaviours
+(listed under **Behaviour changes** below). Drop-in for existing games
+unless you relied on either of those.
+
+### ⚠️ Behaviour changes
+- **`login_with_device_code()` reuses a live code.** A second call while
+  an unexpired code is pending re-emits `device_code_received` with the
+  same code and keeps polling it, instead of minting a new one. This is
+  what makes the reload fix below work, and it also stops a double-tap
+  on "Sign In" from invalidating the code the player is already
+  scanning. Pass `login_with_device_code(true)` to force a fresh code.
+- **`get_weekly_leaderboard()` and `get_alltime_leaderboard()` hit real
+  boards.** They requested scoreboard ids `weekly-scoreboard` and
+  `all-time-new`, which no game has, so both have always returned an
+  empty board with a "may not be configured" log line. They now request
+  `weekly` and `all-time`, the ids the dashboard creates for every game.
+  `get_daily_leaderboard()` / `get_monthly_leaderboard()` were already
+  correct (`daily` / `monthly`, present only if you created them).
+  If you were calling `get_scoreboard("weekly")` directly, nothing
+  changes.
+
+### Fixed
+- **Device code linking survives a page reload.** On phones and
+  home-screen web apps, tapping the link URL can reload the game when
+  the player comes back, which wiped the pending code from memory. The
+  login screen then called `login_with_device_code()` again, minted a
+  fresh code, and the player looped forever: each approval landed on a
+  code the SDK had already forgotten. The pending code (device_code,
+  user_code, link URL, QR, expiry) is now saved to
+  `user://cheddaboards_pending_link.cfg` when it arrives. On startup, if
+  that file holds an unexpired code and there is no saved session,
+  polling resumes on the **same** code, and a subsequent
+  `login_with_device_code()` call re-emits it so the UI shows the code
+  the player already approved. The file is cleared on approval, expiry,
+  invalid-code, `cancel_device_code()` and `logout()`.
+- **`get_game_stats()` works.** It requested `GET /game/stats`, a route
+  the API doesn't have, and failed with `request_failed` on every call.
+  The totals it was after (`totalPlayers`, `totalPlays`) are part of
+  `GET /game`, so it now fetches that, identically to `get_game_info()`.
+- **A failed `unlock_achievements_batch()` no longer hangs the caller.**
+  A non-2xx response emitted nothing at all, so a game awaiting
+  `achievements_loaded` waited forever. The SDK now parses and logs the
+  server's error body and emits `request_failed("unlock_achievement_batch", msg)`
+  followed by `achievements_loaded([])`, matching the non-batch failure
+  path.
+
+### Added
+- `has_pending_device_code()` — true while an unexpired code is waiting
+  for approval, whether requested this session or restored from disk.
+  Unlike `is_device_code_pending()` it does not require polling to be
+  active, so a login screen can skip straight to "waiting for approval"
+  after a reload.
+- `get_device_verification_url()` — link URL of the current code, so a
+  popup can re-show a restored code without waiting for a new
+  `device_code_received`.
+- `get_device_code_seconds_remaining()` — real time left on the current
+  code. A code restored after a reload has less than the original 300s,
+  so countdown UIs should read this rather than assume five minutes.
+- `ui/DeviceCodeLogin.tscn` — a drop-in sign-in popup (QR + code + link,
+  countdown, mobile sizing) that already handles the edge cases: closing
+  it is a soft dismiss, a code restored after a reload shows its real
+  remaining time. Instantiate it, connect `signed_in`, call
+  `start_sign_in()`. Previously only shipped in the template.
+
+### Changed
+- `logout()` now also cancels any in-flight device code, so a stale
+  pending-link file can't outlive the account it belonged to.
+- `cancel_device_code()` docs now say what it's for: an explicit
+  "Cancel" / "use a different account" action, **not** closing the code
+  popup. Closing the popup should just hide it and leave polling
+  running; the player who dismisses the QR before their phone finishes
+  still gets signed in. Otherwise they end up approved on the link page
+  and still logged out in the game. The demo popup
+  (`DeviceCodeLogin.gd` v1.4.0) and the template menu follow this.
+
+### Verified against
+Live API v1.8.0 with time validation **on**, via the new pre-tag smoke
+test under `smoke/`, which runs every public SDK call against a test
+game and asserts on signal contracts. It's what surfaced the two broken
+helpers, the dead `/game/stats` route and the silent batch failure in
+this release.
+
 ## v2.2.7 (2026-09-15)
 
 Rename reliability plus two fixes and one repaired method on the
