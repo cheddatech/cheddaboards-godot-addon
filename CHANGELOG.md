@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## [2.3.1]
+
+### Fixed
+- **Switching player with `set_player_id()` kept the previous player's state.** On a shared device (local roster, one ID per person) the existence flag, cached profile, name, pending rename and play session all carried over, so `change_nickname()` for a brand-new person was sent to the server for a player that didn't exist and the name was lost. `set_player_id()` now resets all per-player state when the ID changes; `logout()` resets the same set.
+- **A per-player response still in flight when the player ID changed was applied to the new player.** Requests now carry a player generation; profile, rename, rank, session, submit and achievement responses (and queued requests) from a previous generation are dropped and logged `it was for the previous player`.
+
+### Changed
+- Switching person is now `set_player_id()` → `login_anonymous()` → `get_player_profile()`; calling `logout()` first is no longer required. See [Player names → Shared devices](https://docs.cheddaboards.com/concepts/player-names#shared-devices-several-players-one-install).
+
+### Packaging
+- Removed the unused `addons/cheddaboards/icon.png` (nothing referenced it) and the duplicate root `LICENSE`; the licence ships inside `addons/cheddaboards/` as before.
+
 ## v2.3.0 (2026-09-28)
 
 Device code linking now survives a page reload, two helpers that never
