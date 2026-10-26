@@ -475,10 +475,13 @@ func _sync_editor(script_path: String, new_content: String, code_edit: CodeEdit)
 	if code_edit:
 		code_edit.text = new_content
 		code_edit.tag_saved_version()  # matches disk, so no unsaved marker
-	var script := ResourceLoader.get_cached_ref(script_path) as Script \
-		if ResourceLoader.has_cached(script_path) else null
-	if script:
-		script.source_code = new_content
+	# Update the copy Godot already has loaded, if any. load() on a cached
+	# path returns that same object (get_cached_ref() would be neater but
+	# needs Godot 4.4, and we support 4.3).
+	if ResourceLoader.has_cached(script_path):
+		var script := load(script_path) as Script
+		if script:
+			script.source_code = new_content
 	EditorInterface.get_resource_filesystem().update_file(script_path)
 
 
