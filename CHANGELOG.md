@@ -11,6 +11,7 @@ This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.
 Setup Wizard fixes. The SDK itself is unchanged.
 
 ### Fixed
+- **The Setup Wizard failed to load on Godot 4.3.** It used `ResourceLoader.get_cached_ref()`, which only exists from 4.4. Works on 4.3+ again.
 - **Credentials written by the Setup Wizard could be lost.** If the target script (`Main.gd`, `MainMenu.gd`) was open in the script editor, the wizard wrote to disk but the open tab kept the old text, and pressing Play saved the tab back over the file. The wizard now updates the open tab as well as the file, and switches to it so you can see the block land. It no longer reloads the script, which could reset exported values on open scenes.
 - **Re-running the wizard with the same key said "No startup script found".** It now says the script already has those credentials.
 - **"Wrong path (uid://...), fixing..." on every run in Godot 4.4+.** Autoloads registered by UID were compared against a `res://` path, so the wizard "fixed" a correct autoload each time and asked for an editor restart. UIDs are now resolved before comparing.
