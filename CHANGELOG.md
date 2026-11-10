@@ -18,6 +18,9 @@ Setup is down to one line, `logout()` can hand the device to a brand-new guest, 
 - **`logout(true)` starts a brand-new guest.** Pass `true` to also throw away the saved device ID, so the next `login_anonymous()` is a new anonymous player instead of the same device ID again. Useful on shared devices and for testing link and merge flows. The default is `false`, so plain `logout()` is unchanged.
 - **`reset_device_id()`.** Deletes the saved device ID, resets per-player state and generates a new one. This is what `logout(true)` calls.
 
+### Tests
+- The smoke test (`smoke/`) now covers the 2.4.0 additions: game ID from the API key, `login_anonymous()` over a linked session, `logout(true)` and `reset_device_id()`. These checks are local and make no API calls. Added after the 2.4.0 tag; the SDK is unchanged.
+
 ## [2.3.2] - 2026-10-26
 
 Setup Wizard fixes. The SDK itself is unchanged.

@@ -314,8 +314,61 @@ func _run() -> void:
 	_check("not authenticated after logout", not CheddaBoards.is_authenticated())
 	_check("session file gone", not FileAccess.file_exists(CheddaBoards.SESSION_PATH))
 
+	await _run_2_4_0()
+
 	await _settle(1.0)
 	_drain_unexpected("end of run")
+
+## 2.4.0 additions. All local SDK state: nothing here calls the API, so a fake
+## session token is safe. Runs last because it replaces the player ID.
+func _run_2_4_0() -> void:
+	var r: Dictionary
+
+	_section("game id from api key (2.4.0)")
+	CheddaBoards.set_api_key(_api_key)
+	CheddaBoards.set_game_id("")
+	var from_key := CheddaBoards.game_id
+	_check("empty set_game_id falls back to the key's game", from_key != "" and _api_key.begins_with("cb_" + from_key + "_"), from_key)
+	CheddaBoards.set_game_id("smoke-override")
+	CheddaBoards.set_api_key(_api_key)
+	_check("explicit set_game_id wins over the key", CheddaBoards.game_id == "smoke-override", CheddaBoards.game_id)
+	CheddaBoards.set_game_id("")
+	_check("clearing the override returns to the key's game", CheddaBoards.game_id == from_key, CheddaBoards.game_id)
+	CheddaBoards.set_game_id(_game_id)
+
+	_section("login_anonymous over a linked session (2.4.0: ignored, must not flip to guest)")
+	CheddaBoards.set_session_token("smoke-fake-session")
+	_check("fake session counts as linked", CheddaBoards.has_account())
+	r = await _fire(func(): CheddaBoards.login_anonymous("smoke_guest"), CheddaBoards.login_success, [CheddaBoards.login_failed], 2.0)
+	_check("login_success still fires", r.ok, r.err)
+	_check("still linked after login_anonymous", CheddaBoards.has_account() and not CheddaBoards.is_anonymous())
+	_check("nickname not overwritten", CheddaBoards.get_nickname() != "smoke_guest", CheddaBoards.get_nickname())
+	CheddaBoards.logout()
+	_check("session file gone after logout", not FileAccess.file_exists(CheddaBoards.SESSION_PATH))
+	r = await _fire(func(): CheddaBoards.login_anonymous("smoke_guest"), CheddaBoards.login_success, [CheddaBoards.login_failed], 2.0)
+	_check("logout then login_anonymous is a guest", r.ok and CheddaBoards.is_anonymous() and not CheddaBoards.has_account(), r.err)
+
+	_section("fresh device id (2.4.0: logout(true), reset_device_id)")
+	var id_before := CheddaBoards.get_player_id()
+	CheddaBoards.logout()
+	_check("plain logout keeps the player id", CheddaBoards.get_player_id() == id_before, CheddaBoards.get_player_id())
+	r = await _fire(func(): CheddaBoards.logout(true), CheddaBoards.logout_success, [], 2.0)
+	var id_fresh := CheddaBoards.get_player_id()
+	_check("logout(true) fires logout_success", r.ok, r.err)
+	_check("logout(true) gives a new dev_ id", id_fresh != id_before and id_fresh.begins_with("dev_"), id_fresh)
+	_check("new id saved to disk", _saved_device_id() == id_fresh, _saved_device_id())
+	CheddaBoards.reset_device_id()
+	var id_reset := CheddaBoards.get_player_id()
+	_check("reset_device_id gives another new id", id_reset != id_fresh and id_reset.begins_with("dev_") and _saved_device_id() == id_reset, id_reset)
+	r = await _fire(func(): CheddaBoards.login_anonymous("smoke_guest"), CheddaBoards.login_success, [CheddaBoards.login_failed], 2.0)
+	_check("next guest logs in on the new id", r.ok and CheddaBoards.get_player_id() == id_reset, r.err)
+	CheddaBoards.logout()
+
+func _saved_device_id() -> String:
+	var cfg := ConfigFile.new()
+	if cfg.load(CheddaBoards.DEVICE_ID_PATH) != OK:
+		return ""
+	return str(cfg.get_value("device", "id", ""))
 
 func _settle(seconds: float) -> void:
 	var t := 0.0
