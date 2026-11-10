@@ -1,4 +1,4 @@
-# CheddaBoards.gd v2.3.2
+# CheddaBoards.gd v2.4.0
 # CheddaBoards integration for Godot 4.x
 # https://github.com/cheddatech/CheddaBoards-Godot
 # https://cheddaboards.com
@@ -8,6 +8,21 @@
 # - Social login (Google, Apple, II): Device Code Auth flow
 #   Player authenticates on their phone at cheddaboards.com/link
 # - Score submissions, play sessions, achievements: all via HTTP API
+# v2.4.0 (minor bump: adds public API and changes one behaviour, see below):
+#   - logout(fresh_device_id): pass true to also throw away the saved device
+#     ID, so the next login_anonymous() is a brand-new guest (shared devices,
+#     testing link/merge). Default false, so plain logout() is unchanged.
+#   - New reset_device_id(): deletes the saved device ID, resets per-player
+#     state and generates a new ID.
+#   - The game ID is now read from the API key (cb_<game-id>_...), so
+#     set_api_key() alone is enough. set_game_id() is optional and still
+#     wins if you call it; a mismatch with the key is logged.
+#   - Behaviour change: login_anonymous() while a linked session is active
+#     is now ignored (logged, and login_success fires with the linked
+#     nickname). Before, it flipped the SDK to "guest" (has_account() false)
+#     while every request still carried the account's session, so games
+#     calling it at startup showed a restored linked player as a guest. To
+#     really switch to a guest, call logout() first.
 # v2.3.2:
 #  - Only touches the wizard and the SDK code is unchanged.
 # v2.3.1:
@@ -201,7 +216,7 @@ extends Node
 # ============================================================
 # 1. Add this script to Project Settings > Autoload as "CheddaBoards"
 # 2. Set your API key: CheddaBoards.set_api_key("cb_xxx")
-# 3. Set your game ID: CheddaBoards.set_game_id("your-game")
+#    (the game ID is read from the key; set_game_id("your-game") is optional)
 #
 # Anonymous login:
 #    func _ready():
@@ -307,7 +322,7 @@ var debug_logging: bool = false
 
 ## HTTP API Configuration
 ## SDK version. Keep in sync with the header changelog.
-const VERSION = "2.3.2"
+const VERSION = "2.4.0"
 const API_BASE_URL = "https://api.cheddaboards.com"
 ## Direct canister reads (public board GETs served by the canister itself
 ## over the IC HTTP gateway). Same response shape as the proxy; used for
@@ -330,11 +345,11 @@ const DEDUPE_READ_TYPES = [
 ## Your API key from the CheddaBoards developer dashboard (cheddaboards.com).
 ## Set at runtime via set_api_key():
 ##     CheddaBoards.set_api_key("cb_your-game_xxxxxxxxxx")
-var api_key: String = ""
-## Your game ID from the developer dashboard.
-## Set at runtime via set_game_id():
-##     CheddaBoards.set_game_id("your-game")
+var api_key: String = "": set = set_api_key
+## Your game ID. Read from the API key automatically; only call
+## set_game_id() if you need to override it.
 var game_id: String = ""
+var _game_id_from_key: bool = false   ## game_id came from the key, not set_game_id()
 var _player_id: String = ""
 var _session_token: String = ""  ## For OAuth session-based auth
 var _play_session_token: String = ""  ## For time validation
@@ -458,6 +473,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_http_client()
 	_log("Initializing CheddaBoards v%s (HTTP API Mode)..." % VERSION)
+	_adopt_game_id_from_key()   # covers an api_key written straight into this file
 	_load_saved_session()
 	# Resume an interrupted device code link (page reload mid-link). Runs
 	# synchronously so a login screen that calls login_with_device_code()
@@ -1260,10 +1276,39 @@ func get_auth_type() -> String:
 func set_api_key(key: String) -> void:
 	api_key = key
 	_log("API key set")
+	_adopt_game_id_from_key()
 
 func set_game_id(id: String) -> void:
 	game_id = id
+	_game_id_from_key = false
 	_log("Game ID set: %s" % id)
+	# An empty ID means "no override": fall back to the one in the API key
+	if id == "":
+		_adopt_game_id_from_key()
+
+## The game ID inside an API key. Keys are cb_<game-id>_<random>, so the game
+## ID is everything between the "cb_" prefix and the last underscore.
+## Returns "" if the key isn't in that shape.
+func _game_id_in_key(key: String) -> String:
+	if not key.begins_with("cb_"):
+		return ""
+	var end = key.rfind("_")
+	if end <= 3:
+		return ""
+	return key.substr(3, end - 3)
+
+## Takes the game ID from the API key unless the game set one itself.
+func _adopt_game_id_from_key() -> void:
+	var from_key = _game_id_in_key(api_key)
+	if from_key == "":
+		return
+	if game_id == "" or _game_id_from_key:
+		if game_id != from_key:
+			game_id = from_key
+			_log("Game ID taken from API key: %s" % game_id)
+		_game_id_from_key = true
+	elif game_id != from_key:
+		_log("WARNING: game ID '%s' does not match the API key's game '%s'" % [game_id, from_key])
 
 func set_session_token(token: String) -> void:
 	_session_token = token
@@ -1479,6 +1524,12 @@ func _sanitize_player_id(raw_id: String) -> String:
 
 ## Anonymous login - uses API key + persistent device ID
 func login_anonymous(nickname: String = "") -> void:
+	# Ignored while a linked session is active (call logout() first to switch
+	# to a guest): login_success still fires, with the linked nickname.
+	if not _session_token.is_empty():
+		_log("login_anonymous() ignored: a linked session is active (call logout() first)")
+		login_success.emit(_nickname)
+		return
 	if api_key.is_empty():
 		login_failed.emit("API key not set. Call set_api_key() first.")
 		return
@@ -1512,14 +1563,33 @@ func login_internet_identity(nickname: String = "") -> void:
 func login_chedda_id(nickname: String = "") -> void:
 	login_internet_identity(nickname)
 
-func logout() -> void:
+## Signs the player out. Pass fresh_device_id = true to also start a brand-new
+## anonymous identity, so the next login_anonymous() is a new guest rather than
+## the device ID that was merged into the account at link time. Useful for
+## shared devices and for testing link/merge flows.
+func logout(fresh_device_id: bool = false) -> void:
 	_reset_player_state()
 	_auth_type = ""
 	_session_token = ""
 	_clear_saved_session()
 	cancel_device_code()
+	if fresh_device_id:
+		reset_device_id()
 	logout_success.emit()
 	_log("Logged out")
+
+## Throws away the saved device ID and generates a new one, so the next
+## login_anonymous() is a brand-new guest.
+func reset_device_id() -> void:
+	var old_id = _player_id
+	_player_id = ""
+	if FileAccess.file_exists(DEVICE_ID_PATH):
+		var dir = DirAccess.open("user://")
+		if dir:
+			dir.remove(DEVICE_ID_PATH.trim_prefix("user://"))
+	_reset_player_state()
+	var new_id = get_player_id()
+	_log("Device ID reset: %s -> %s" % [old_id.left(12), new_id.left(12)])
 
 func is_authenticated() -> bool:
 	if _auth_type == "anonymous":

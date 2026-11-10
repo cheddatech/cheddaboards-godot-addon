@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## [2.4.0] - 2026-11-10
+
+Setup is down to one line, `logout()` can hand the device to a brand-new guest, and a linked player is no longer shown as a guest after a restart. Minor bump: this release adds public API and changes one behaviour (listed under **Behaviour changes** below). Drop-in for existing games unless you relied on that.
+
+### ⚠️ Behaviour changes
+- **`login_anonymous()` is ignored while a linked session is active.** It used to flip the SDK to "guest" (`has_account()` false, `is_anonymous()` true) while every request still carried the linked account's session. Games that call `login_anonymous()` at startup therefore showed a restored linked player as a guest, with no way to log out, while their scores kept going to the account. The call is now logged and skipped, and `login_success` still fires with the linked nickname, so flows waiting on that signal carry on. To really switch to a guest, call `logout()` first.
+
+### Added
+- **The game ID is read from the API key.** Keys are `cb_<game-id>_<random>`, so `set_api_key()` alone is now enough; assigning `api_key` directly works too. `set_game_id()` is optional and still wins if you call it with a value, and a mismatch with the key is logged. `set_game_id("")` means "no override" and falls back to the key.
+- **`logout(true)` starts a brand-new guest.** Pass `true` to also throw away the saved device ID, so the next `login_anonymous()` is a new anonymous player instead of the same device ID again. Useful on shared devices and for testing link and merge flows. The default is `false`, so plain `logout()` is unchanged.
+- **`reset_device_id()`.** Deletes the saved device ID, resets per-player state and generates a new one. This is what `logout(true)` calls.
+
 ## [2.3.2] - 2026-10-26
 
 Setup Wizard fixes. The SDK itself is unchanged.
