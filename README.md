@@ -37,6 +37,7 @@ Your scores, achievements and sign-in are live — there is no server for you to
 * **Category boards** — per-level, per-mode or per-difficulty leaderboards under one game, no separate registration per board
 * **Achievements** — unlock individually or in batches, submit alongside scores, deferred sync built in; a full auto-unlock engine with offline caching and popups ships in the free template
 * **Anonymous play, zero setup** — players submit scores with no account; the server names them automatically (Player_1248) and they can pick their own in-game with `change_nickname()`. Link Google or Apple later and keep all progress
+* **Names in any language** — with International names on (dashboard), players can add a display name like `田中 太郎` or `Дмитрий` via `set_display_name()`; rows read it with `get_entry_name(entry)`. Your game needs a font with those characters
 * **Device Code sign-in** — Google / Apple login on any platform via QR + code, no OAuth SDKs to bundle. Players sign in once and stay signed in across restarts and web reloads, and a sign-in interrupted mid-link (phone tabs, home-screen web apps) picks up where it left off
 * **Faster board loads** — leaderboard reads come straight from the backend canister, with automatic proxy fallback, so boards load quickly with no setup
 * **Anti-cheat** — server-side play sessions, score validation, rate limiting, configurable caps

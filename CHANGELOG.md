@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This repo is the standalone home of the SDK from v2.2.5 onwards. History for v2.2.4 and earlier lives in the [cheddaboards-godot changelog](https://github.com/cheddatech/CheddaBoards-Godot/blob/main/docs/CHANGELOG.md), where the SDK previously shipped as part of the full template.
 
+## [2.5.0] - 2026-11-25
+
+International display names. Players can show a name in their own language (日本語, 한국어, Кириллица, accented Latin and so on) next to their nickname. Minor bump: new public API only, nothing existing changes. Needs the CheddaBoards API from 25 Nov 2026 (canister v0.18.0, proxy v1.12.0), which is already live.
+
+### Added
+- **`set_display_name(name)` and `clear_display_name()`**, with the new signals `display_name_changed(display_name)` (empty means cleared) and `display_name_error(reason)`. The nickname is unchanged: still unique, ASCII, 3-16 characters, and the name every game can show. The display name is optional, one per account, doesn't have to be unique, and only works in games where the developer turned on **International names** in the dashboard. A name set before the player's first score is held by the API and applied with that first score.
+- **The server normalises the name** (for example a full-width space becomes a normal one) and enforces the rules: 2-16 characters, one alphabet (Japanese, Chinese and Korean mixes are fine), no emoji. Show the value from `display_name_changed`, not the one you sent.
+- **`get_display_name()`** returns the player's own display name, `""` if they have none or the game has International names off.
+- **Board entries carry an optional `displayName`** in games with International names on. **`get_entry_name(entry)`** returns it when present and the nickname otherwise, so leaderboard rows can switch over with one call.
+- **`get_game_info()` now emits `game_info_loaded(info)`** and sets **`international_names`**, so a game can show its display-name box only when the feature is on.
+
+### Fonts
+Godot's default font has no Japanese, Chinese or Korean glyphs, so those names render as boxes. Add a fallback font (for example Noto Sans CJK) to the theme's default font before turning International names on. See docs.cheddaboards.com for the steps.
+
+### Tests
+- The smoke test covers `get_entry_name()`, `game_info_loaded`, the refusal while International names is off, and, when it's on for the test game, the set / normalise / profile reload / mixed-alphabet refusal / clear round-trip.
+
 ## [2.4.0] - 2026-11-10
 
 Setup is down to one line, `logout()` can hand the device to a brand-new guest, and a linked player is no longer shown as a guest after a restart. Minor bump: this release adds public API and changes one behaviour (listed under **Behaviour changes** below). Drop-in for existing games unless you relied on that.

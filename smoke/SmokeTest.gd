@@ -222,6 +222,8 @@ func _run() -> void:
 	else:
 		_check("server persisted new nickname (board entry)", board_nick == nick2, board_nick)
 
+	await _run_display_names()
+
 	_section("achievements (REGRESSION 2.2.7: batch must not report 0 synced; get_achievements route must exist)")
 	var ach := ["smoke_a", "smoke_b"]
 	r = await _fire(func(): CheddaBoards.unlock_achievements_batch(ach), CheddaBoards.achievements_loaded, [CheddaBoards.request_failed])
@@ -363,6 +365,47 @@ func _run_2_4_0() -> void:
 	r = await _fire(func(): CheddaBoards.login_anonymous("smoke_guest"), CheddaBoards.login_success, [CheddaBoards.login_failed], 2.0)
 	_check("next guest logs in on the new id", r.ok and CheddaBoards.get_player_id() == id_reset, r.err)
 	CheddaBoards.logout()
+
+## 2.5.0 display names. Needs the player to exist (runs after the first submit).
+## Full round-trip only when the game has International names on in the
+## dashboard; otherwise checks the refusal and skips the rest.
+func _run_display_names() -> void:
+	var r: Dictionary
+
+	_section("display names (2.5.0)")
+	_check("get_entry_name prefers displayName", CheddaBoards.get_entry_name({"nickname": "a_b", "displayName": "田中"}) == "田中")
+	_check("get_entry_name falls back to nickname", CheddaBoards.get_entry_name({"nickname": "a_b"}) == "a_b")
+	_check("get_entry_name treats null as none", CheddaBoards.get_entry_name({"nickname": "a_b", "displayName": null}) == "a_b")
+
+	r = await _fire(func(): CheddaBoards.get_game_info(), CheddaBoards.game_info_loaded, [CheddaBoards.request_failed])
+	_check("game_info_loaded", r.ok, r.err)
+	if not r.ok:
+		return
+	_check("game info carries internationalNames", (r.args[0] as Dictionary).has("internationalNames"), str((r.args[0] as Dictionary).keys()))
+	if not CheddaBoards.international_names:
+		r = await _fire(func(): CheddaBoards.set_display_name("田中"), CheddaBoards.display_name_changed, [CheddaBoards.display_name_error])
+		_check("set_display_name refused while the game has it off", not r.ok and "not enabled" in r.err, r.err)
+		_unexpected_failures.clear()  # that refusal also fires request_failed, by design
+		print("  SKIP  display name round-trip (turn on International names for %s in the dashboard to run it)" % _game_id)
+		return
+
+	r = await _fire(func(): CheddaBoards.set_display_name("田中　太郎"), CheddaBoards.display_name_changed, [CheddaBoards.display_name_error])
+	_check("display_name_changed", r.ok, r.err)
+	if r.ok:
+		_check("server normalised the ideographic space", str(r.args[0]) == "田中 太郎", str(r.args[0]))
+		_check("get_display_name updated", CheddaBoards.get_display_name() == "田中 太郎", CheddaBoards.get_display_name())
+
+	r = await _fire(func(): CheddaBoards.get_player_profile(), CheddaBoards.profile_loaded, [CheddaBoards.no_profile])
+	_check("profile reload carries the display name", r.ok and CheddaBoards.get_display_name() == "田中 太郎", CheddaBoards.get_display_name() if r.ok else r.err)
+
+	r = await _fire(func(): CheddaBoards.set_display_name("Дmitry"), CheddaBoards.display_name_changed, [CheddaBoards.display_name_error])
+	_check("mixed alphabets refused", not r.ok and r.err != "", r.err)
+	_unexpected_failures.clear()
+	_check("refusal kept the old name", CheddaBoards.get_display_name() == "田中 太郎", CheddaBoards.get_display_name())
+
+	r = await _fire(func(): CheddaBoards.clear_display_name(), CheddaBoards.display_name_changed, [CheddaBoards.display_name_error])
+	_check("clear_display_name", r.ok and str(r.args[0]) == "", r.err if not r.ok else str(r.args[0]))
+	_check("get_display_name empty after clear", CheddaBoards.get_display_name() == "")
 
 func _saved_device_id() -> String:
 	var cfg := ConfigFile.new()
